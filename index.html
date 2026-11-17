@@ -1,12 +1,13 @@
 
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HikitoChat</title>
+<title>HikitoChat — Спільний чат</title>
 <style>
 * { box-sizing: border-box; }
+
 body {
   margin: 0;
   background: #10131c;
@@ -14,9 +15,11 @@ body {
   font-family: Arial, sans-serif;
   display: flex;
   justify-content: center;
+  align-items: center;
   min-height: 100vh;
-  padding: 20px;
+  padding: 15px;
 }
+
 .chat {
   width: 100%;
   max-width: 650px;
@@ -29,18 +32,30 @@ body {
   flex-direction: column;
   overflow: hidden;
 }
+
 header {
   padding: 20px;
   background: #242c40;
   border-bottom: 1px solid #30394d;
 }
-header h1 { margin: 0 0 6px; color: #71a7ff; }
-header p { margin: 0; color: #aab4c8; font-size: 13px; }
+
+header h1 {
+  margin: 0 0 7px;
+  color: #71a7ff;
+}
+
+header p {
+  margin: 0;
+  color: #aab4c8;
+  font-size: 13px;
+}
+
 #messages {
   flex: 1;
   overflow-y: auto;
   padding: 18px;
 }
+
 .message {
   background: #293247;
   padding: 12px;
@@ -48,14 +63,26 @@ header p { margin: 0; color: #aab4c8; font-size: 13px; }
   margin-bottom: 12px;
   overflow-wrap: anywhere;
 }
-.name { color: #83b2ff; font-weight: bold; margin-bottom: 6px; }
-.time { color: #929db2; font-size: 11px; margin-top: 7px; }
+
+.name {
+  color: #83b2ff;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.time {
+  color: #929db2;
+  font-size: 11px;
+  margin-top: 7px;
+}
+
 form {
   display: flex;
   gap: 8px;
   padding: 14px;
   background: #242c40;
 }
+
 input {
   min-width: 0;
   flex: 1;
@@ -66,6 +93,7 @@ input {
   color: white;
   outline: none;
 }
+
 button {
   border: 0;
   border-radius: 10px;
@@ -75,24 +103,39 @@ button {
   font-weight: bold;
   cursor: pointer;
 }
-button:disabled { opacity: .5; }
-#status { color: #aab4c8; font-size: 12px; padding: 0 15px 10px; }
+
+button:disabled {
+  opacity: .5;
+}
+
+#status {
+  color: #aab4c8;
+  font-size: 12px;
+  padding: 0 15px 10px;
+}
 </style>
 </head>
+
 <body>
+
 <div class="chat">
   <header>
     <h1>💬 HikitoChat</h1>
-    <p>Общий чат — общайся со всем миром!</p>
+    <p>Спільний чат — спілкуйся з усім світом!</p>
   </header>
 
   <div id="messages"></div>
-  <div id="status">Подключение к чату...</div>
+
+  <div id="status">Підключення до чату...</div>
 
   <form id="form">
-    <input id="messageInput" maxlength="500"
-      placeholder="Напиши сообщение..." autocomplete="off">
-    <button id="sendButton" type="submit">➤</button>
+    <input
+      id="messageInput"
+      maxlength="500"
+      placeholder="Напиши повідомлення..."
+      autocomplete="off"
+    >
+    <button id="sendButton" type="submit">Надіслати ➤</button>
   </form>
 </div>
 
@@ -101,13 +144,22 @@ import { initializeApp } from
 "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 
 import {
-  getAuth, signInAnonymously
-} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+  getAuth,
+  signInAnonymously
+} from
+"https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 
 import {
-  getFirestore, collection, addDoc, query,
-  orderBy, limit, onSnapshot, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+  getFirestore,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  serverTimestamp
+} from
+"https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAbEeBZxdEwjcaL9cO4Cw98efviL2gznS4",
@@ -134,7 +186,7 @@ try {
   const result = await signInAnonymously(auth);
   currentUser = result.user;
 
-  const username = "User" + currentUser.uid.slice(0, 5);
+  const username = "Користувач" + currentUser.uid.slice(0, 5);
 
   const q = query(
     collection(db, "messages"),
@@ -153,7 +205,7 @@ try {
 
       const name = document.createElement("div");
       name.className = "name";
-      name.textContent = data.username || "User";
+      name.textContent = data.username || "Користувач";
 
       const text = document.createElement("div");
       text.textContent = data.text || "";
@@ -161,22 +213,26 @@ try {
       const time = document.createElement("div");
       time.className = "time";
       time.textContent = data.createdAt?.toDate()
-        .toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) || "";
+        .toLocaleTimeString("uk-UA", {
+          hour: "2-digit",
+          minute: "2-digit"
+        }) || "";
 
       card.append(name, text, time);
       messages.append(card);
     });
 
     messages.scrollTop = messages.scrollHeight;
-    status.textContent = "🟢 Подключено к общему чату";
+    status.textContent = "🟢 Підключено до спільного чату";
   }, (error) => {
-    status.textContent = "Ошибка загрузки сообщений: " + error.message;
+    status.textContent = "Помилка завантаження повідомлень: " + error.message;
   });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const text = input.value.trim();
+
     if (!text || text.length > 500) return;
 
     sendButton.disabled = true;
@@ -191,15 +247,16 @@ try {
 
       input.value = "";
     } catch (error) {
-      alert("Не удалось отправить сообщение: " + error.message);
+      alert("Не вдалося надіслати повідомлення: " + error.message);
     } finally {
       sendButton.disabled = false;
     }
   });
 
 } catch (error) {
-  status.textContent = "Ошибка подключения: " + error.message;
+  status.textContent = "Помилка підключення: " + error.message;
 }
 </script>
+
 </body>
 </html>
