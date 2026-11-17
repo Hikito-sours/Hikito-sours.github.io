@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HikitoChat</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #10131c;
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+.chat {
+  width: 100%;
+  max-width: 650px;
+  height: 85vh;
+  min-height: 450px;
+  background: #1b2030;
+  border: 1px solid #30394d;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+header {
+  padding: 20px;
+  background: #242c40;
+  border-bottom: 1px solid #30394d;
+}
+header h1 { margin: 0 0 6px; color: #71a7ff; }
+header p { margin: 0; color: #aab4c8; font-size: 13px; }
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+}
+.message {
+  background: #293247;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.name { color: #83b2ff; font-weight: bold; margin-bottom: 6px; }
+.time { color: #929db2; font-size: 11px; margin-top: 7px; }
+form {
+  display: flex;
+  gap: 8px;
+  padding: 14px;
+  background: #242c40;
+}
+input {
+  min-width: 0;
+  flex: 1;
+  padding: 14px;
+  border: 1px solid #414d66;
+  border-radius: 10px;
+  background: #151b29;
+  color: white;
+  outline: none;
+}
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 0 18px;
+  background: #397cf6;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:disabled { opacity: .5; }
+#status { color: #aab4c8; font-size: 12px; padding: 0 15px 10px; }
+</style>
+</head>
+<body>
+<div class="chat">
+  <header>
+    <h1>💬 HikitoChat</h1>
+    <p>Общий чат — общайся со всем миром!</p>
+  </header>
+
+  <div id="messages"></div>
+  <div id="status">Подключение к чату...</div>
+
+  <form id="form">
+    <input id="messageInput" maxlength="500"
+      placeholder="Напиши сообщение..." autocomplete="off">
+    <button id="sendButton" type="submit">➤</button>
+  </form>
+</div>
+
+<script type="module">
+import { initializeApp } from
+"https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+
+import {
+  getAuth, signInAnonymously
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+
+import {
+  getFirestore, collection, addDoc, query,
+  orderBy, limit, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAbEeBZxdEwjcaL9cO4Cw98efviL2gznS4",
+  authDomain: "hikitochat.firebaseapp.com",
+  projectId: "hikitochat",
+  storageBucket: "hikitochat.firebasestorage.app",
+  messagingSenderId: "945327550843",
+  appId: "1:945327550843:web:9ddf4760e9e06679c44dde"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const messages = document.getElementById("messages");
+const status = document.getElementById("status");
+const form = document.getElementById("form");
+const input = document.getElementById("messageInput");
+const sendButton = document.getElementById("sendButton");
+
+let currentUser = null;
+
+try {
+  const result = await signInAnonymously(auth);
+  currentUser = result.user;
+
+  const username = "User" + currentUser.uid.slice(0, 5);
+
+  const q = query(
+    collection(db, "messages"),
+    orderBy("createdAt", "asc"),
+    limit(100)
+  );
+
+  onSnapshot(q, (snapshot) => {
+    messages.replaceChildren();
+
+    snapshot.forEach((item) => {
+      const data = item.data();
+
+      const card = document.createElement("div");
+      card.className = "message";
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = data.username || "User";
+
+      const text = document.createElement("div");
+      text.textContent = data.text || "";
+
+      const time = document.createElement("div");
+      time.className = "time";
+      time.textContent = data.createdAt?.toDate()
+        .toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) || "";
+
+      card.append(name, text, time);
+      messages.append(card);
+    });
+
+    messages.scrollTop = messages.scrollHeight;
+    status.textContent = "🟢 Подключено к общему чату";
+  }, (error) => {
+    status.textContent = "Ошибка загрузки сообщений: " + error.message;
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const text = input.value.trim();
+    if (!text || text.length > 500) return;
+
+    sendButton.disabled = true;
+
+    try {
+      await addDoc(collection(db, "messages"), {
+        text,
+        username,
+        uid: currentUser.uid,
+        createdAt: serverTimestamp()
+      });
+
+      input.value = "";
+    } catch (error) {
+      alert("Не удалось отправить сообщение: " + error.message);
+    } finally {
+      sendButton.disabled = false;
+    }
+  });
+
+} catch (error) {
+  status.textContent = "Ошибка подключения: " + error.message;
+}
+</script>
+</body>
+</html>
